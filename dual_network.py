@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn.functional as F
 from torch import cuda, nn
@@ -87,6 +89,17 @@ class DualModel(nn.Module):
         if channel_in is None:
             channel_in = channel_out
         return Block(channel_in, channel_out)
+
+
+def load_model(file_path) -> DualModel:
+    model = DualModel()
+    if os.path.exists(file_path):
+        model.load_state_dict(torch.load(file_path))
+    return model.to(device)
+
+
+def save_model(model, file_path) -> None:
+    torch.save(model.state_dict(), file_path)
 
 
 if __name__ == '__main__':
