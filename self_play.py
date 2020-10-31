@@ -13,14 +13,14 @@ SP_GAME_COUNT = 500  # セルフプレイを行うゲーム数(本家は25000)
 SP_TEMPERATURE = 1.0  # ボルツマン分布の温度パラメータ
 
 
-def first_player_value(ended_state):
+def first_player_value(ended_state) -> float:
     """先手プレイヤーの価値"""
     # 1:先手勝利, -1:先手敗北, 0:引き分け
     if ended_state.is_win():
-        return 1 if ended_state.is_first_player() else -1
+        return 1.0 if ended_state.is_first_player() else -1.0
     elif ended_state.is_lose():
-        return -1 if ended_state.is_first_player() else 1
-    return 0
+        return -1.0 if ended_state.is_first_player() else 1.0
+    return 0.0
 
 
 def write_data(history):

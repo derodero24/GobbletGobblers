@@ -134,7 +134,7 @@ def boltzman(xs, temperature):
 
 # 動作確認
 if __name__ == '__main__':
-    model = DualModel()
+    model = DualModel().to(device)
     state = State()
 
     # モンテカルロ木探索で行動取得を行う関数の生成
