@@ -11,6 +11,7 @@ PV_EVALUATE_COUNT = 50
 
 
 def predict(model, state):
+    """推論"""
     # 推論のための入力データのシェイプの変換
     x = state.pieces_array().reshape((1, *DN_INPUT_SHAPE))
     x = torch.from_numpy(x).to(device)
@@ -140,17 +141,9 @@ if __name__ == '__main__':
     # モンテカルロ木探索で行動取得を行う関数の生成
     next_action = pv_mcts_action(model, 1.0)
 
-    # ゲーム終了までループ
     while True:
-        # ゲーム終了時
         if state.is_done():
             break
-
-        # 行動の取得
         action = next_action(state)
-
-        # 次の状態の取得
         state = state.next(action)
-
-        # 文字列表示
         print(state)
