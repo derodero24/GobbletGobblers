@@ -39,7 +39,6 @@ def play(model):
     history = []  # 学習データ
 
     while True:
-        # ゲーム終了時
         if state.is_done():
             break
 
@@ -65,12 +64,10 @@ def play(model):
         value = -value
     return history
 
-# セルフプレイ
-
 
 def self_play():
-    # 学習データ
-    history = []
+    """自己対戦"""
+    history = []  # 学習データ
 
     # ベストプレイヤーのモデルの読み込み
     model = DualModel().to(device)
@@ -84,8 +81,7 @@ def self_play():
         print(f'\rSelfPlay {i + 1}/{SP_GAME_COUNT}', end='')
     print()
 
-    # 学習データの保存
-    write_data(history)
+    write_data(history)  # 学習データの保存
 
 
 if __name__ == '__main__':

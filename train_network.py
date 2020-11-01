@@ -1,4 +1,3 @@
-import os
 import pickle
 from glob import glob
 
@@ -7,10 +6,13 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 from torch import nn, optim
+from torch.utils.data import DataLoader
+from torch.utils.data.dataset import TensorDataset
 
-from dual_network import DN_INPUT_SHAPE, DualModel, device
+from dual_network import DN_INPUT_SHAPE, device, load_model, save_model
 
-RN_EPOCHS = 100  # 学習回数
+RN_EPOCHS = 100
+BATCH_SIZE = 128
 
 
 def load_data():
@@ -31,15 +33,9 @@ def train_network():
     x = torch.from_numpy(x).to(device)
     policies = torch.tensor(policies).to(device)
     values = torch.tensor(values).reshape((-1, 1)).to(device)
-    print(x.shape, policies.shape, values.shape)
-    # print(policies)
-    print(values)
 
     # モデル読み込み
-    model = DualModel()
-    if os.path.exists('./model/best.h5'):
-        model.load_state_dict(torch.load('./model/best.h5'))
-    model.to(device)
+    model = load_model('./model/best.h5')
     # 複数GPU使用宣言
     if str(device) == 'cuda':
         model = nn.DataParallel(model)
@@ -47,29 +43,29 @@ def train_network():
 
     optimizer = optim.Adam(model.parameters(),
                            lr=0.001, amsgrad=True)
-    criterion = nn.CrossEntropyLoss()
 
-    p_pred, v_pred = model(x)
-    print(p_pred.shape, v_pred.shape)
-    # p_loss = F.nll_loss(p_pred, policies)
-    # v_loss = F.nll_loss(v_pred, values)
-    # p_loss = criterion(p_pred, policies)
-    v_loss = criterion(v_pred, values)
-    print(v_loss.shape)
-    # p_loss.backward()
-    # optimizer.step()
+    loader = DataLoader(TensorDataset(x, policies, values),
+                        batch_size=BATCH_SIZE, shuffle=True)
 
-    # 出力
-    # print(f'\rTrain {epoch + 1}/{RN_EPOCHS}', end='')
+    for epoch in range(RN_EPOCHS):
+        for x_batch, p_batch, v_batch in loader:
 
-    # # 学習の実行
-    # model.fit(x, [y_policies, y_values],
-    #           batch_size=128, epochs=RN_EPOCHS,
-    #           verbose=0, callbacks=[lr_decay, print_callback])
-    # print('')
+            optimizer.zero_grad()
+            # モデル推論
+            p_pred, v_pred = model(x_batch)
+            # loss計算
+            p_loss = -p_pred.log().mul(p_batch).mean()  # cross_entropy_lossみたいな
+            v_loss = F.mse_loss(v_batch, values)
+            # 更新
+            (p_loss + v_loss).backward()
+            optimizer.step()
 
-    # # 最新プレイヤーのモデルの保存
-    # torch.save(model.state_dict(), './model/latest.h5')
+            # 出力
+            print(f'\r{epoch + 1}/{RN_EPOCHS} '
+                  f'p_loss: {p_loss:.03}, v_loss: {v_loss:.03}', end='')
+
+    # 最新プレイヤーのモデルの保存
+    save_model(model, './model/latest.h5')
 
 
 # 動作確認
