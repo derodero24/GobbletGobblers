@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 import torch
 
-from dual_network import DN_OUTPUT_SIZE, DualModel, device
+from dual_network import DN_OUTPUT_SIZE, DualModel, device, load_model
 from game import State
 from pv_mcts import pv_mcts_scores
 
@@ -70,9 +70,8 @@ def self_play():
     history = []  # 学習データ
 
     # ベストプレイヤーのモデルの読み込み
-    model = DualModel().to(device)
-    if os.path.exists('./model/best.h5'):
-        model.load_state_dict(torch.load('./model/best.h5'))
+    model = load_model('./model/best.h5')
+    model.eval()
 
     # 複数回のゲームの実行
     for i in range(SP_GAME_COUNT):

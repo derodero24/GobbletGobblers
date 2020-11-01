@@ -40,6 +40,7 @@ def train_network():
     if str(device) == 'cuda':
         model = nn.DataParallel(model)
         cudnn.benchmark = True
+    model.train()
 
     optimizer = optim.Adam(model.parameters(),
                            lr=0.001, amsgrad=True)
