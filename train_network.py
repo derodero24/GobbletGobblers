@@ -1,3 +1,4 @@
+import os
 import pickle
 from glob import glob
 
@@ -12,7 +13,7 @@ from torch.utils.data.dataset import TensorDataset
 from dual_network import DN_INPUT_SHAPE, device, load_model, save_model
 
 RN_EPOCHS = 100
-BATCH_SIZE = 128
+BATCH_SIZE = 1024
 
 
 def load_data():
@@ -33,6 +34,12 @@ def train_network():
     x = torch.from_numpy(x).to(device)
     policies = torch.tensor(policies).to(device)
     values = torch.tensor(values).reshape((-1, 1)).to(device)
+    print(x.shape, policies.shape, values.shape)
+
+    # データローダー
+    loader = DataLoader(TensorDataset(x, policies, values),
+                        batch_size=BATCH_SIZE, shuffle=True)
+    del x, policies, values
 
     # モデル読み込み
     model = load_model('./model/best.h5')
@@ -43,20 +50,16 @@ def train_network():
     model.train()
 
     optimizer = optim.Adam(model.parameters(),
-                           lr=0.001, amsgrad=True)
-
-    loader = DataLoader(TensorDataset(x, policies, values),
-                        batch_size=BATCH_SIZE, shuffle=True)
+                           lr=0.0001, amsgrad=True)
 
     for epoch in range(RN_EPOCHS):
         for x_batch, p_batch, v_batch in loader:
-
             optimizer.zero_grad()
             # モデル推論
             p_pred, v_pred = model(x_batch)
             # loss計算
             p_loss = -p_pred.log().mul(p_batch).mean()  # cross_entropy_lossみたいな
-            v_loss = F.mse_loss(v_batch, values)
+            v_loss = F.mse_loss(v_batch, v_pred)
             # 更新
             (p_loss + v_loss).backward()
             optimizer.step()
@@ -64,9 +67,13 @@ def train_network():
             # 出力
             print(f'\r{epoch + 1}/{RN_EPOCHS} '
                   f'p_loss: {p_loss:.03}, v_loss: {v_loss:.03}', end='')
+    print()
 
     # 最新プレイヤーのモデルの保存
+    os.makedirs('./model', exist_ok=True)
     save_model(model, './model/latest.h5')
+    if not os.path.exists('./model/best.h5'):
+        save_model(model, './model/best.h5')
 
 
 # 動作確認

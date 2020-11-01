@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn.functional as F
 from torch import cuda, nn
+from torch.nn.parallel.data_parallel import DataParallel
 
 DN_RESIDUAL_NUM = 10  # 残差ブロックの数（本家は19）
 DN_INPUT_SHAPE = (12, 3, 3)  # 入力shape
@@ -94,11 +95,14 @@ class DualModel(nn.Module):
 def load_model(file_path) -> DualModel:
     model = DualModel()
     if os.path.exists(file_path):
-        model.load_state_dict(torch.load(file_path))
+        model.load_state_dict(torch.load(
+            file_path, map_location=device))
     return model.to(device)
 
 
 def save_model(model, file_path) -> None:
+    if isinstance(model, DataParallel):
+        model = model.module
     torch.save(model.state_dict(), file_path)
 
 

@@ -32,10 +32,7 @@ def predict(model, state):
 
 def nodes_to_scores(nodes):
     """ノードのリストを試行回数のリストに変換"""
-    scores = []
-    for c in nodes:
-        scores.append(c.n)
-    return scores
+    return [c.n for c in nodes]
 
 
 def pv_mcts_scores(model, state, temperature):
@@ -56,7 +53,12 @@ def pv_mcts_scores(model, state, temperature):
             # ゲーム終了時
             if self.state.is_done():
                 # 勝敗結果で価値を取得
-                value = -1 if self.state.is_lose() else 0
+                if self.state.is_win():
+                    value = 1
+                elif self.state.is_lose():
+                    value = -1
+                else:
+                    value = 0
 
                 # 累計価値と試行回数の更新
                 self.w += value

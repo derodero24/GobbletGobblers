@@ -3,9 +3,8 @@ import pickle
 from datetime import datetime
 
 import numpy as np
-import torch
 
-from dual_network import DN_OUTPUT_SIZE, DualModel, device, load_model
+from dual_network import DN_OUTPUT_SIZE, load_model
 from game import State
 from pv_mcts import pv_mcts_scores
 
